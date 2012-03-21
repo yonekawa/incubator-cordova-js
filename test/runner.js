@@ -22,7 +22,6 @@ function collect(path, files, matches) {
 module.exports = {
     node: function () {
         var jas = require("../thirdparty/jasmine/jasmine"),
-            loader = require('../lib/require'),
             TerminalReporter = require('./reporter').TerminalReporter,
             jsdom, document, window;
 
@@ -41,16 +40,19 @@ module.exports = {
             this[key] = window[key] = global[key] = jas[key];
         });
 
-        //hijack require
-        require = loader.require;
-        define = loader.define;
-
         //load in our modules
-        eval(packager.modules('test'));
+        var testLibName = _path.join(__dirname, '..', 'pkg', 'cordova.test-debug.js')
+        var testLib     = fs.readFileSync(testLibName, 'utf8')
+        eval(testLib);
+
+        //hijack require
+        require = window.cordova.require;
+        define  = window.cordova.define;
 
         //load in our tests
         collect(__dirname, tests);
         for (var x in tests) {
+            console.log('running test: ' + tests[x])
             eval(fs.readFileSync(tests[x], "utf-8"));
         }
 
@@ -71,8 +73,7 @@ module.exports = {
             modules,
             specs,
             app = connect(
-                connect.static(__dirname + "/../lib/"),
-                connect.static(__dirname + "/../"),
+                connect.static(_path.join(__dirname, '..', 'thirdparty')),
                 connect.static(__dirname),
                 connect.router(function (app) {
                     app.get('/', function (req, res) {
