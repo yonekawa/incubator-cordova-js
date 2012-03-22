@@ -21,6 +21,7 @@ function collect(path, files, matches) {
 
 module.exports = {
     node: function () {
+        console.log('starting node-based tests')
         var jas = require("../thirdparty/jasmine/jasmine"),
             TerminalReporter = require('./reporter').TerminalReporter,
             jsdom, document, window;
@@ -43,7 +44,14 @@ module.exports = {
         //load in our modules
         var testLibName = _path.join(__dirname, '..', 'pkg', 'cordova.test-debug.js')
         var testLib     = fs.readFileSync(testLibName, 'utf8')
-        eval(testLib);
+        try {
+            eval(testLib);
+        }
+        catch (e) {
+            console.log("error eval()ing " + testLibName + ": " + e)
+            console.log(e.stack)
+            throw e
+        }
 
         //hijack require
         require = window.cordova.require;
@@ -67,6 +75,7 @@ module.exports = {
         env.execute();
     },
     browser: function () {
+        console.log('starting browser-based tests')
         var connect = require('connect'),
             html = fs.readFileSync(__dirname + "/suite.html", "utf-8"),
             doc,

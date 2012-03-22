@@ -26,14 +26,16 @@ packager.generate = function(platform) {
 
 //------------------------------------------------------------------------------
 packager.bundle = function(platform, debug) {
-    var modules = collectFiles('lib-common')
-    var scripts = collectFiles('lib-scripts')
+    var modules = collectFiles('lib/common')
+    var scripts = collectFiles('lib/scripts')
+    
+    modules[''] = 'lib/cordova.js'
     
     if (['playbook', 'blackberry'].indexOf(platform) > -1) {
-        copyProps(modules, collectFiles(path.join('lib-platforms', 'webworks')))
+        copyProps(modules, collectFiles(path.join('lib', 'webworks')))
     }
     
-    copyProps(modules, collectFiles(path.join('lib-platforms', platform)))
+    copyProps(modules, collectFiles(path.join('lib', platform)))
 
     var output = []
 
@@ -53,10 +55,9 @@ packager.bundle = function(platform, debug) {
     moduleIds.sort()
     
     for (var i=0; i<moduleIds.length; i++) {
-        var moduleId = moduleIds[i];
+        var moduleId = moduleIds[i]
         
         writeModule(output, modules[moduleId], moduleId, debug)
-        
     }
 
     output.push("\nwindow.cordova = require('cordova');\n")
@@ -128,9 +129,13 @@ function writeScript(oFile, fileName, debug) {
 
 //------------------------------------------------------------------------------
 function writeModule(oFile, fileName, moduleId, debug) {
-    var contents = getContents(fileName, 'utf8')
+    var contents = '\n' + getContents(fileName, 'utf8') + '\n'
     
-    contents = 'define("' + moduleId + '", function(require, exports, module) {\n' + contents + '\n})\n'
+    moduleId = path.join('cordova', moduleId)
+    
+    var signature = 'function(require, exports, module)'
+    
+    contents = 'define("' + moduleId + '", ' + signature + ' {' + contents + '})\n'
 
     writeContents(oFile, fileName, contents, debug)    
 }
